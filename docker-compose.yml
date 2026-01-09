@@ -1,0 +1,97 @@
+services:
+  # ---------- Databases ----------
+  user_db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: userdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - user_data:/var/lib/postgresql/data
+    networks:
+      - appnet
+
+  course_db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: coursedb
+    ports:
+      - "5435:5432"
+    volumes:
+      - course_data:/var/lib/postgresql/data
+    networks:
+      - appnet
+
+  booking_db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: bookingdb
+    ports:
+      - "5436:5432"
+    volumes:
+      - booking_data:/var/lib/postgresql/data
+    networks:
+      - appnet
+
+  # ---------- Microservices ----------
+  user_service:
+    build: ./user_service
+    env_file: ./user_service/.env.docker
+    environment:
+      APP_ENV: docker
+    depends_on:
+      - user_db
+    ports:
+      - "8001:8000"
+    networks:
+      - appnet
+
+  course_service:
+    build: ./course_service
+    env_file: ./course_service/.env.docker
+    environment:
+      APP_ENV: docker
+    depends_on:
+      - course_db
+    ports:
+      - "8002:8000"
+    networks:
+      - appnet
+
+  booking_service:
+    build: ./booking_service
+    env_file: ./booking_service/.env.docker
+    environment:
+      APP_ENV: docker
+    depends_on:
+      - booking_db
+      - user_service
+      - course_service
+    ports:
+      - "8003:8000"
+    networks:
+      - appnet
+
+  notification_service:
+    build: ./notification_service
+    env_file: ./notification_service/.env.docker
+    environment:
+      APP_ENV: docker
+    ports:
+      - "8004:8000"
+    networks:
+      - appnet
+
+networks:
+  appnet:
+
+volumes:
+  user_data:
+  course_data:
+  booking_data:
